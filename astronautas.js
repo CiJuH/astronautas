@@ -32,7 +32,7 @@ filtro.addEventListener("input", function() {
 
 async function getListaAstronautas() {
     if (datosCacheados) return datosCacheados;
-    const respuesta = await fetch("http://api.open-notify.org/astros.json");
+    const respuesta = await fetch("https://people-in-space-api.iss-mirroring.workers.dev/");
     datosCacheados = await respuesta.json();
     return datosCacheados;
 }
