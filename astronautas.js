@@ -3,6 +3,22 @@ const botonAaa = document.getElementById("btn-aaa")
 const botonRefrescar = document.getElementById("btn-refrescar");
 const filtro = document.getElementById("input-filtro");
 
+const DATOS_MOCK = {
+    number: 10,
+    people: [
+        { name: "Wu Fei", craft: "Tiangong" },
+        { name: "Zhang Lu", craft: "Tiangong" },
+        { name: "Zhang Hongzhang", craft: "Tiangong" },
+        { name: "Sergei Kud-Sverchkov", craft: "ISS" },
+        { name: "Sergei Mikayev", craft: "ISS" },
+        { name: "Christopher Williams", craft: "ISS" },
+        { name: "Sophie Adenot", craft: "ISS" },
+        { name: "Andrei Fedyaev", craft: "ISS" },
+        { name: "Jack Hathaway", craft: "ISS" },
+        { name: "Jessica Meir", craft: "ISS" }
+    ]
+}
+
 let datosCacheados = null;
 
 botonTodos.addEventListener("click", function() {
@@ -32,9 +48,15 @@ filtro.addEventListener("input", function() {
 
 async function getListaAstronautas() {
     if (datosCacheados) return datosCacheados;
-    const respuesta = await fetch("https://people-in-space-api.iss-mirroring.workers.dev/");
-    datosCacheados = await respuesta.json();
-    return datosCacheados;
+    try {
+        const respuesta = await fetch("http://api.open-notify.org/astros.json");
+        datosCacheados = await respuesta.json();
+        return datosCacheados;
+    } catch (error) {
+        console.log("Error: ", error)
+        mostrarToast("❗No se han podido cargar los datos de los astronautas. Prueba más tarde.")
+        return DATOS_MOCK
+    }
 }
 
 function refrescarDatos() {
@@ -55,6 +77,7 @@ function refrescarDatos() {
 
 async function showListaAstronautas() {
     const datos = await getListaAstronautas();
+    if (!datos) return
     let contador = document.getElementById("contador");
     contador.textContent = getContador(datos);
     let lista = document.getElementById("lista");
@@ -118,4 +141,13 @@ async function filtrar(input) {
     limpiarLista()
     const items = montarListaAstronautas(nuevaLista)
     addToListHTML(items, lista)
+}
+
+function mostrarToast(mensaje) {
+    const toast = document.getElementById("toast");
+    toast.textContent = mensaje
+    toast.classList.add("visible")
+    setTimeout(function() {
+        toast.classList.remove("visible")
+    }, 3000)
 }
