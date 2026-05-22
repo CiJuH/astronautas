@@ -2,6 +2,16 @@ const botonTodos = document.getElementById("btn-buscar");
 const botonAaa = document.getElementById("btn-aaa")
 const botonRefrescar = document.getElementById("btn-refrescar");
 const filtro = document.getElementById("input-filtro");
+const choices = [
+    "Deja de apretarme, estúpido", 
+    "¡Cómo te atreves!", 
+    "¡Vaya fresco!", 
+    "¡Estoy incómodo!", 
+    "¿Tú esto lo ves normal?",
+    "Espero que se te rompa el dedo",
+    "¡Ay! ¡¡Ay!! ¡¡AY!!",
+    "Suéltame, por favor"
+]
 
 const DATOS_MOCK = {
     number: 10,
@@ -20,6 +30,12 @@ const DATOS_MOCK = {
 }
 
 let datosCacheados = null;
+let scale = 1;
+let intervaloRefresco = null;
+let intervaloAaaa = null;
+let aaaaaa = "A";
+let intervaloMensajes = null;
+let timeoutVibrar = null;
 
 botonTodos.addEventListener("click", function() {
     console.log("¡Botón pulsado!")
@@ -39,11 +55,25 @@ botonRefrescar.addEventListener("mouseover", function() {
     botonRefrescar.textContent = "🥶"
 })
 botonRefrescar.addEventListener("mouseleave", function() {
+    pararRefresco()
     botonRefrescar.textContent = "🥤"
 })
+botonRefrescar.addEventListener("mousedown", iniciarRefresco)
+botonRefrescar.addEventListener("mouseup", pararRefresco)
 
 filtro.addEventListener("input", function() {
     filtrar(filtro.value)
+})
+filtro.addEventListener("input", function() {
+    if (filtro.value === "") {
+        showListaAstronautas()
+    }
+    else {
+        filtrar(filtro.value)
+    }
+})
+filtro.addEventListener("blur", function() {
+    console.log("Eres una pta")
 })
 
 async function getListaAstronautas() {
@@ -79,7 +109,7 @@ async function showListaAstronautas() {
     const datos = await getListaAstronautas();
     if (!datos) return
     let contador = document.getElementById("contador");
-    contador.textContent = getContador(datos);
+    contador.textContent = `${getContador(datos)} astronautas`;
     let lista = document.getElementById("lista");
     lista.innerHTML = "";
     ulLi = montarListaAstronautas(datos.people)
@@ -94,11 +124,14 @@ function montarListaAstronautas(personas) {
     let items = []
     personas.forEach(function(astronauta) {
         newLi = document.createElement("li");
-        nombreNave = astronauta.name + " — " + astronauta.craft;
-        newLi.textContent = nombreNave;
+        const spanNombre = document.createElement("span")
+        const spanNave = document.createElement("span")
+        spanNombre.textContent = astronauta.name
+        spanNave.textContent = astronauta.craft
+        newLi.appendChild(spanNombre)
+        newLi.appendChild(spanNave)
         items.push(newLi)
     })
-    console.log(items)
     return items
 }
 
@@ -143,11 +176,52 @@ async function filtrar(input) {
     addToListHTML(items, lista)
 }
 
-function mostrarToast(mensaje) {
+function mostrarToast(mensaje, permanente = false) {
     const toast = document.getElementById("toast");
     toast.textContent = mensaje
-    toast.classList.add("visible")
-    setTimeout(function() {
-        toast.classList.remove("visible")
-    }, 3000)
+    if (permanente) {
+        toast.classList.add("permanente")
+        toast.classList.add("visible")
+    } else {
+        toast.classList.remove("permanente")
+        toast.classList.add("visible")
+        setTimeout(function() {
+            toast.classList.remove("visible")
+        }, 3000)
+    }
+}
+
+function iniciarRefresco() {
+    timeoutVibrar = setTimeout(function() {
+        botonRefrescar.classList.add("vibrando")
+    }, 15000)
+
+    intervaloMensajes = setInterval(function() {
+        if (choices.length > 0) {
+            var index = Math.floor(Math.random() * choices.length)
+            mostrarToast(choices[index])
+            choices.splice(index, 1)
+        } else {
+            clearInterval(intervaloMensajes)  // para el de 4s
+            intervaloAaaa = setInterval(function() {
+                aaaaaa += "A"
+                mostrarToast(aaaaaa, true)
+            }, 100)
+        }
+    }, 4000)
+}
+
+function pararRefresco() {
+    clearInterval(intervaloRefresco)
+    clearInterval(intervaloMensajes)
+    clearInterval(intervaloAaaa)
+    clearTimeout(timeoutVibrar)
+    intervaloAaaa = null
+    aaaaaa = "A"
+    scale = 1
+    botonRefrescar.style.transform = "scale(1)"
+    botonRefrescar.classList.remove("vibrando")
+    const toast = document.getElementById("toast")
+    toast.classList.remove("permanente")
+    toast.classList.remove("visible")
 }
