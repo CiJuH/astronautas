@@ -13,23 +13,6 @@ const choices = [
     "Suéltame, por favor"
 ]
 
-const DATOS_MOCK = {
-    number: 10,
-    people: [
-        { name: "Wu Fei", craft: "Tiangong" },
-        { name: "Zhang Lu", craft: "Tiangong" },
-        { name: "Zhang Hongzhang", craft: "Tiangong" },
-        { name: "Sergei Kud-Sverchkov", craft: "ISS" },
-        { name: "Sergei Mikayev", craft: "ISS" },
-        { name: "Christopher Williams", craft: "ISS" },
-        { name: "Sophie Adenot", craft: "ISS" },
-        { name: "Andrei Fedyaev", craft: "ISS" },
-        { name: "Jack Hathaway", craft: "ISS" },
-        { name: "Jessica Meir", craft: "ISS" }
-    ]
-}
-
-let datosCacheados = null;
 let scale = 1;
 let intervaloRefresco = null;
 let intervaloAaaa = null;
@@ -52,6 +35,7 @@ botonRefrescar.addEventListener("click", function() {
     refrescarDatos()
 })
 botonRefrescar.addEventListener("mouseover", function() {
+    console.log("hover")
     botonRefrescar.textContent = "🥶"
 })
 botonRefrescar.addEventListener("mouseleave", function() {
@@ -76,63 +60,12 @@ filtro.addEventListener("blur", function() {
     console.log("Eres una pta")
 })
 
-async function getListaAstronautas() {
-    if (datosCacheados) return datosCacheados;
-    try {
-        const respuesta = await fetch("http://api.open-notify.org/astros.json");
-        datosCacheados = await respuesta.json();
-        return datosCacheados;
-    } catch (error) {
-        console.log("Error: ", error)
-        mostrarToast("❗No se han podido cargar los datos de los astronautas. Prueba más tarde.")
-        return DATOS_MOCK
-    }
-}
-
-function refrescarDatos() {
-    datosCacheados = null;
-    showListaAstronautas()
-}
-
-// function pingOpenNotify() {
-//     fetch("http://api.open-notify.org/astros.json")
-//         .then(function(respuesta) {
-//             return respuesta.json()
-//         })
-//         .then(function(datos) {
-//             console.log(datos);
-//             showAstronautList(datos)
-//         });
-// }
-
-async function showListaAstronautas() {
-    const datos = await getListaAstronautas();
-    if (!datos) return
-    let contador = document.getElementById("contador");
-    contador.textContent = `${getContador(datos)} astronautas`;
-    let lista = document.getElementById("lista");
-    lista.innerHTML = "";
-    ulLi = montarListaAstronautas(datos.people)
-    addToListHTML(ulLi, lista)
-}
-
 function getContador(datos) {
     return datos.number
 }
 
 function montarListaAstronautas(personas) {
-    let items = []
-    personas.forEach(function(astronauta) {
-        newLi = document.createElement("li");
-        const spanNombre = document.createElement("span")
-        const spanNave = document.createElement("span")
-        spanNombre.textContent = astronauta.name
-        spanNave.textContent = astronauta.craft
-        newLi.appendChild(spanNombre)
-        newLi.appendChild(spanNave)
-        items.push(newLi)
-    })
-    return items
+    return personas.map(crearItemAstronauta)
 }
 
 function addToListHTML(lista, contenedor) {
@@ -141,87 +74,73 @@ function addToListHTML(lista, contenedor) {
     });
 }
 
-function limpiarLista() {
-    const lista = document.getElementById("lista");
-    const contador = document.getElementById("contador")
-    contador.textContent = ""
-    lista.innerHTML = ""
+function filtrarPersonas(personas, input) {
+    return personas.filter(function(element) {
+        return element.name.toLowerCase().includes(input.toLowerCase()) ||
+               element.craft.toLowerCase().includes(input.toLowerCase())
+    })
 }
-
-// function showListaAstronautas(datos) {
-//     const lista = document.getElementById("lista");
-//     let contador = document.getElementById("contador")
-//     contador.textContent = datos.people.length
-//     lista.innerHTML = "";
-
-//     datos.people.forEach(function(astronauta) {
-//         newLi = document.createElement("li")
-//         nombreNave = astronauta.name + " — " + astronauta.craft
-//         newLi.textContent = nombreNave
-//         lista.appendChild(newLi)
-//     })
-// }
 
 async function filtrar(input) {
-    const lista = document.getElementById("lista")
     const datos = await getListaAstronautas()
-    nuevaLista = []
-    datos.people.forEach(function(element) {
-        if (element.name.toLowerCase().includes(input.toLowerCase()) || element.craft.toLowerCase().includes(input.toLowerCase())) {
-            nuevaLista.push(element)
-        }
-    })
-    limpiarLista()
-    const items = montarListaAstronautas(nuevaLista)
-    addToListHTML(items, lista)
-}
-
-function mostrarToast(mensaje, permanente = false) {
-    const toast = document.getElementById("toast");
-    toast.textContent = mensaje
-    if (permanente) {
-        toast.classList.add("permanente")
-        toast.classList.add("visible")
-    } else {
-        toast.classList.remove("permanente")
-        toast.classList.add("visible")
-        setTimeout(function() {
-            toast.classList.remove("visible")
-        }, 3000)
-    }
+    const filtrados = filtrarPersonas(datos.people, input)
+    renderListaAstronautas({ number: filtrados.length, people: filtrados })
 }
 
 function iniciarRefresco() {
+    intervaloRefresco = setInterval(function() {
+        scale += 0.05
+        botonRefrescar.style.transform = `scale(${scale})`
+    }, 50)
+
     timeoutVibrar = setTimeout(function() {
         botonRefrescar.classList.add("vibrando")
     }, 15000)
 
     intervaloMensajes = setInterval(function() {
-        if (choices.length > 0) {
-            var index = Math.floor(Math.random() * choices.length)
-            mostrarToast(choices[index])
-            choices.splice(index, 1)
+        const mensaje = elegirMensaje()
+        if (mensaje) {
+            mostrarToast(mensaje)
         } else {
-            clearInterval(intervaloMensajes)  // para el de 4s
-            intervaloAaaa = setInterval(function() {
-                aaaaaa += "A"
-                mostrarToast(aaaaaa, true)
-            }, 100)
+            clearInterval(intervaloMensajes)
+            iniciarAaaa()
         }
     }, 4000)
 }
 
-function pararRefresco() {
+function clearAllIntervals() {
     clearInterval(intervaloRefresco)
     clearInterval(intervaloMensajes)
     clearInterval(intervaloAaaa)
     clearTimeout(timeoutVibrar)
     intervaloAaaa = null
+}
+
+function resetBotonRefrescar() {
     aaaaaa = "A"
     scale = 1
     botonRefrescar.style.transform = "scale(1)"
     botonRefrescar.classList.remove("vibrando")
-    const toast = document.getElementById("toast")
-    toast.classList.remove("permanente")
-    toast.classList.remove("visible")
+}
+
+function pararRefresco() {
+    clearAllIntervals()
+    resetBotonRefrescar()
+    ocultarToast()
+}
+
+function iniciarAaaa() {
+    intervaloAaaa = setInterval(function() {
+        aaaaaa += "A"
+        mostrarToastPermanente(aaaaaa)
+    }, 100)
+}
+
+function elegirMensaje() {
+    if (choices.length > 0) {
+        var index = Math.floor(Math.random() * choices.length)
+        var choice = choices[index]
+        choices.splice(index, 1)
+        return choice;
+    }
 }

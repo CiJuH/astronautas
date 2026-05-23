@@ -50,17 +50,8 @@ button {
     transition: background 0.2s;
 }
 
-button.hover {
+button:hover {
     background: #ebebe8;
-}
-
-#btn-refrescar {
-    transition: transform 0.4s
-}
-
-#btn-refrescar:active {
-    transform: scale(40);
-    transition: transform 15s;
 }
 
 @keyframes vibrar {
